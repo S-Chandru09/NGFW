@@ -1,0 +1,107 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: ai-ngfw-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ai_ngfw
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-ngfw-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: AI-NGFW Zero Trust Firewall
+      ENVIRONMENT: production
+      DEBUG: "false"
+      RELOAD: "false"
+      HOST: 0.0.0.0
+      PORT: 8000
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production-use-openssl-rand-hex-32}
+      MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DATABASE: ai_ngfw
+      CORS_ORIGINS: http://localhost,http://localhost:80,http://127.0.0.1,http://frontend
+      AI_ENGINE_ENABLED: "true"
+      AI_ENGINE_URL: http://ai-engine:8001
+      AI_ENGINE_TIMEOUT_SECONDS: ${AI_ENGINE_TIMEOUT_SECONDS:-600}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-dev-internal-api-key}
+      LOG_LEVEL: INFO
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_pcap:/app/pcap
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  ai-engine:
+    build:
+      context: ./ai_engine
+      dockerfile: Dockerfile
+    container_name: ai-ngfw-ai-engine
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8001
+      BACKEND_URL: http://backend:8000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-dev-internal-api-key}
+      BACKEND_SENDER_ENABLED: "true"
+      BACKEND_TIMEOUT_SECONDS: ${BACKEND_TIMEOUT_SECONDS:-120}
+      LIVE_CAPTURE_ENABLED: ${LIVE_CAPTURE_ENABLED:-true}
+      CAPTURE_INTERFACE: ${CAPTURE_INTERFACE:-}
+      CAPTURE_BPF_FILTER: ${CAPTURE_BPF_FILTER:-ip or ip6}
+      LIVE_CAPTURE_PACKET_COUNT: ${LIVE_CAPTURE_PACKET_COUNT:-50}
+      LIVE_CAPTURE_TIMEOUT_SECONDS: ${LIVE_CAPTURE_TIMEOUT_SECONDS:-30}
+      LOG_LEVEL: INFO
+    volumes:
+      - ./ai_engine/ml/models:/app/ml/models:ro
+      - ./ai_engine/data/processed:/app/data/processed:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+        VITE_WS_BASE_URL: /ws
+        VITE_APP_NAME: AI-NGFW Dashboard
+        VITE_APP_VERSION: 1.0.0
+    container_name: ai-ngfw-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
+  backend_uploads:
+  backend_pcap:

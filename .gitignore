@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+*.sw?
+
+# Logs
+logs/
+*.log
+
+# ML artifacts (train locally)
+ai_engine/ml/models/sklearn/*
+ai_engine/ml/models/tensorflow/*
+!ai_engine/ml/models/sklearn/.gitkeep
+!ai_engine/ml/models/tensorflow/.gitkeep
+ai_engine/data/raw/*
+ai_engine/data/processed/*
+!ai_engine/data/raw/.gitkeep
+!ai_engine/data/processed/.gitkeep
+
+# PCAP uploads
+ai_engine/network/pcap/incoming/*
+ai_engine/network/pcap/processing/*
+ai_engine/network/pcap/processed/*
+ai_engine/network/pcap/failed/*
+!ai_engine/network/pcap/incoming/.gitkeep
+!ai_engine/network/pcap/processing/.gitkeep
+!ai_engine/network/pcap/processed/.gitkeep
+!ai_engine/network/pcap/failed/.gitkeep
+
+# Backend uploads
+backend/uploads/
+backend/pcap/
+
+# Cursor assets (local screenshots)
+assets/
