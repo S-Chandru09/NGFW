@@ -60,3 +60,5 @@ backend/pcap/
 
 # Cursor assets (local screenshots)
 assets/
+
+.vscode/

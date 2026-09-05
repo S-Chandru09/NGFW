@@ -37,3 +37,9 @@ def test_all_roles_define_permissions() -> None:
   for role in UserRole:
     assert role in ROLE_PERMISSIONS
     assert len(ROLE_PERMISSIONS[role]) > 0
+
+
+def test_oauth2_password_flow_uses_form_login_token_url() -> None:
+  from core.auth_utils import oauth2_scheme
+
+  assert oauth2_scheme.model.flows.password.tokenUrl == "/api/v1/auth/login/form"

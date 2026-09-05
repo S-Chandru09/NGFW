@@ -44,6 +44,12 @@ COLLECTION_INDEXES: dict[str, list[IndexModel]] = {
     IndexModel([("trust_score", DESCENDING)], name="devices_trust_score_index"),
     IndexModel([("is_trusted", ASCENDING)], name="devices_is_trusted_index"),
     IndexModel([("last_seen_at", DESCENDING)], name="devices_last_seen_at_index"),
+    IndexModel(
+      [("ip_address", ASCENDING)],
+      unique=True,
+      name="devices_ip_address_unique",
+      partialFilterExpression={"ip_address": {"$type": "string"}},
+    ),
   ],
   CollectionNames.POLICIES: [
     IndexModel([("name", ASCENDING)], unique=True, name="policies_name_unique"),

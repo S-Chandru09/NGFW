@@ -4,13 +4,23 @@ services:
     container_name: ai-ngfw-mongodb
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
-      MONGO_INITDB_DATABASE: ai_ngfw
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-ngfw_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-ngfw_secret_2024}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-ai_ngfw}
+    command: ["mongod", "--bind_ip_all"]
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "mongodb://ngfw_admin:ngfw_secret_2024@localhost:27017/admin?authSource=admin",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,8 +42,8 @@ services:
       HOST: 0.0.0.0
       PORT: 8000
       SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production-use-openssl-rand-hex-32}
-      MONGODB_URL: mongodb://mongodb:27017
-      MONGODB_DATABASE: ai_ngfw
+      MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME:-ngfw_admin}:${MONGO_ROOT_PASSWORD:-ngfw_secret_2024}@mongodb:27017/${MONGODB_DATABASE:-ai_ngfw}?authSource=admin
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-ai_ngfw}
       CORS_ORIGINS: http://localhost,http://localhost:80,http://127.0.0.1,http://frontend
       AI_ENGINE_ENABLED: "true"
       AI_ENGINE_URL: http://ai-engine:8001
@@ -100,6 +110,12 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   mongodb_data:

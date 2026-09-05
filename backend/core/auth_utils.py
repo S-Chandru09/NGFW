@@ -12,7 +12,7 @@ from database import get_users_collection
 from models.user import UserInDB, UserPublic, UserRole, UserDocument
 
 oauth2_scheme = OAuth2PasswordBearer(
-  tokenUrl=f"{settings.api_v1_prefix}/auth/login",
+  tokenUrl=f"{settings.api_v1_prefix}/auth/login/form",
   auto_error=False,
 )
 

@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from enum import Enum
+from ipaddress import ip_address
 from typing import Annotated, Any, Optional
 from uuid import uuid4
 
 from bson import ObjectId
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
 
 class DeviceType(str, Enum):
@@ -30,39 +31,109 @@ def validate_object_id(value: Any) -> str:
 PyObjectId = Annotated[str, BeforeValidator(validate_object_id)]
 
 
-class DeviceBase(BaseModel):
+def normalize_optional_ip(value: Any) -> Optional[str]:
+  if value is None:
+    return None
+
+  if isinstance(value, str):
+    cleaned = value.strip()
+    if not cleaned:
+      return None
+
+    try:
+      return str(ip_address(cleaned))
+    except ValueError as exc:
+      raise ValueError("ip_address must be a valid IPv4 or IPv6 address") from exc
+
+  raise ValueError("ip_address must be a valid IPv4 or IPv6 address")
+
+
+class DeviceCreate(BaseModel):
+  model_config = ConfigDict(extra="ignore")
+
   device_name: str = Field(..., min_length=2, max_length=100)
   device_type: DeviceType = DeviceType.UNKNOWN
   os_type: Optional[str] = Field(default=None, max_length=50)
   ip_address: Optional[str] = Field(default=None, max_length=45)
   user_id: Optional[str] = None
-  is_trusted: bool = False
-  trust_score: float = Field(default=50.0, ge=0.0, le=100.0)
   is_compliant: bool = True
   metadata: dict[str, Any] = Field(default_factory=dict)
 
+  @field_validator("device_name")
+  @classmethod
+  def validate_device_name(cls, value: str) -> str:
+    cleaned = value.strip()
+    if len(cleaned) < 2:
+      raise ValueError("Device name must be at least 2 characters")
+    return cleaned
 
-class DeviceCreate(DeviceBase):
-  pass
+  @field_validator("ip_address", mode="before")
+  @classmethod
+  def validate_ip_address(cls, value: Any) -> Optional[str]:
+    return normalize_optional_ip(value)
+
+  @field_validator("user_id", mode="before")
+  @classmethod
+  def normalize_user_id(cls, value: Any) -> Optional[str]:
+    if value is None:
+      return None
+    if isinstance(value, str):
+      cleaned = value.strip()
+      return cleaned or None
+    return str(value)
 
 
 class DeviceUpdate(BaseModel):
+  model_config = ConfigDict(extra="ignore")
+
   device_name: Optional[str] = Field(default=None, min_length=2, max_length=100)
   device_type: Optional[DeviceType] = None
   os_type: Optional[str] = Field(default=None, max_length=50)
   ip_address: Optional[str] = Field(default=None, max_length=45)
   user_id: Optional[str] = None
-  is_trusted: Optional[bool] = None
-  trust_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
   is_compliant: Optional[bool] = None
   metadata: Optional[dict[str, Any]] = None
 
+  @field_validator("device_name")
+  @classmethod
+  def validate_device_name(cls, value: Optional[str]) -> Optional[str]:
+    if value is None:
+      return value
+    cleaned = value.strip()
+    if len(cleaned) < 2:
+      raise ValueError("Device name must be at least 2 characters")
+    return cleaned
 
-class DeviceInDB(DeviceBase):
+  @field_validator("ip_address", mode="before")
+  @classmethod
+  def validate_ip_address(cls, value: Any) -> Optional[str]:
+    return normalize_optional_ip(value)
+
+  @field_validator("user_id", mode="before")
+  @classmethod
+  def normalize_user_id(cls, value: Any) -> Optional[str]:
+    if value is None:
+      return None
+    if isinstance(value, str):
+      cleaned = value.strip()
+      return cleaned or None
+    return str(value)
+
+
+class DeviceInDB(BaseModel):
   model_config = ConfigDict(populate_by_name=True)
 
   id: PyObjectId = Field(alias="_id")
   device_id: str
+  device_name: str
+  device_type: DeviceType
+  os_type: Optional[str] = None
+  ip_address: Optional[str] = None
+  user_id: Optional[str] = None
+  is_trusted: bool = False
+  trust_score: float = Field(default=50.0, ge=0.0, le=100.0)
+  is_compliant: bool = True
+  metadata: dict[str, Any] = Field(default_factory=dict)
   last_seen_at: Optional[datetime] = None
   created_at: datetime
   updated_at: datetime
@@ -102,14 +173,26 @@ class DeviceDocument:
       "os_type": device_data.os_type,
       "ip_address": device_data.ip_address,
       "user_id": device_data.user_id,
-      "is_trusted": device_data.is_trusted,
-      "trust_score": device_data.trust_score,
+      "is_trusted": False,
+      "trust_score": 50.0,
       "is_compliant": device_data.is_compliant,
       "metadata": device_data.metadata,
-      "last_seen_at": now,
+      "last_seen_at": None,
       "created_at": now,
       "updated_at": now,
     }
+
+  @staticmethod
+  def update_fields(update_data: DeviceUpdate) -> dict[str, Any]:
+    fields = update_data.model_dump(exclude_unset=True)
+    fields.pop("trust_score", None)
+    fields.pop("is_trusted", None)
+    if "device_type" in fields and fields["device_type"] is not None:
+      fields["device_type"] = (
+        fields["device_type"].value if hasattr(fields["device_type"], "value") else fields["device_type"]
+      )
+    fields["updated_at"] = DeviceDocument._utc_now()
+    return fields
 
   @staticmethod
   def from_mongo(document: Optional[dict[str, Any]]) -> Optional[DeviceInDB]:

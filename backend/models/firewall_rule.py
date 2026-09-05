@@ -6,6 +6,12 @@ from uuid import uuid4
 from bson import ObjectId
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
+from core.firewall_wildcards import (
+  normalize_ip_constraint,
+  normalize_port_constraint,
+  normalize_protocol_constraint,
+)
+
 
 class FirewallRuleAction(str, Enum):
   ALLOW = "allow"
@@ -61,6 +67,21 @@ class FirewallRuleBase(BaseModel):
       raise ValueError("Rule name cannot be empty")
     return cleaned
 
+  @field_validator("source_ip", "destination_ip", mode="before")
+  @classmethod
+  def normalize_ip_fields(cls, value: Any) -> Optional[str]:
+    return normalize_ip_constraint(value)
+
+  @field_validator("source_port", "destination_port", mode="before")
+  @classmethod
+  def normalize_port_fields(cls, value: Any) -> Optional[int]:
+    return normalize_port_constraint(value)
+
+  @field_validator("protocol", mode="before")
+  @classmethod
+  def normalize_protocol_field(cls, value: Any) -> Any:
+    return normalize_protocol_constraint(value)
+
   @model_validator(mode="after")
   def validate_temporary_block(self):
     if self.action == FirewallRuleAction.TEMPORARY_BLOCK and self.expires_at is None:
@@ -100,6 +121,21 @@ class FirewallRuleUpdate(BaseModel):
   is_automatic: Optional[bool] = None
   trigger_source: Optional[str] = Field(default=None, max_length=50)
   trigger_reference_id: Optional[str] = Field(default=None, max_length=100)
+
+  @field_validator("source_ip", "destination_ip", mode="before")
+  @classmethod
+  def normalize_ip_fields(cls, value: Any) -> Optional[str]:
+    return normalize_ip_constraint(value)
+
+  @field_validator("source_port", "destination_port", mode="before")
+  @classmethod
+  def normalize_port_fields(cls, value: Any) -> Optional[int]:
+    return normalize_port_constraint(value)
+
+  @field_validator("protocol", mode="before")
+  @classmethod
+  def normalize_protocol_field(cls, value: Any) -> Any:
+    return normalize_protocol_constraint(value)
 
   @model_validator(mode="after")
   def validate_temporary_block_update(self):

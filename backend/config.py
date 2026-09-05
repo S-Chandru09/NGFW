@@ -1,8 +1,8 @@
 from functools import lru_cache
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -39,13 +39,13 @@ class Settings(BaseSettings):
   refresh_token_expire_days: int = Field(default=7, alias="REFRESH_TOKEN_EXPIRE_DAYS")
 
   # CORS
-  cors_origins: List[str] = Field(
+  cors_origins: Annotated[List[str], NoDecode] = Field(
     default=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
     alias="CORS_ORIGINS",
   )
   cors_allow_credentials: bool = Field(default=True, alias="CORS_ALLOW_CREDENTIALS")
-  cors_allow_methods: List[str] = Field(default=["*"], alias="CORS_ALLOW_METHODS")
-  cors_allow_headers: List[str] = Field(default=["*"], alias="CORS_ALLOW_HEADERS")
+  cors_allow_methods: Annotated[List[str], NoDecode] = Field(default=["*"], alias="CORS_ALLOW_METHODS")
+  cors_allow_headers: Annotated[List[str], NoDecode] = Field(default=["*"], alias="CORS_ALLOW_HEADERS")
 
   # MongoDB
   mongodb_url: str = Field(

@@ -1,6 +1,4 @@
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 
 def hash_password(plain_password: str) -> str:
@@ -10,11 +8,18 @@ def hash_password(plain_password: str) -> str:
   if len(plain_password) < 8:
     raise ValueError("Password must be at least 8 characters long")
 
-  return pwd_context.hash(plain_password)
+  hashed = bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt())
+  return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
   if not plain_password or not hashed_password:
     return False
 
-  return pwd_context.verify(plain_password, hashed_password)
+  try:
+    return bcrypt.checkpw(
+      plain_password.encode("utf-8"),
+      hashed_password.encode("utf-8"),
+    )
+  except ValueError:
+    return False

@@ -2,6 +2,7 @@ import ipaddress
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from core.firewall_wildcards import is_unrestricted_value
 from database import get_firewall_rules_collection
 from models.firewall_engine import AutomaticRuleAction, AutomaticRuleTrigger, FirewallDecision
 from models.firewall_rule import (
@@ -40,28 +41,28 @@ class FirewallEngine:
     return datetime.now(timezone.utc)
 
   def _ip_matches(self, rule_ip: Optional[str], flow_ip: str) -> bool:
-    if rule_ip is None:
+    if is_unrestricted_value(rule_ip):
       return True
 
     try:
-      if "/" in rule_ip:
-        return ipaddress.ip_address(flow_ip) in ipaddress.ip_network(rule_ip, strict=False)
+      if "/" in str(rule_ip):
+        return ipaddress.ip_address(flow_ip) in ipaddress.ip_network(str(rule_ip), strict=False)
 
-      return ipaddress.ip_address(flow_ip) == ipaddress.ip_address(rule_ip)
+      return ipaddress.ip_address(flow_ip) == ipaddress.ip_address(str(rule_ip))
     except ValueError:
-      return rule_ip == flow_ip
+      return str(rule_ip) == flow_ip
 
   def _port_matches(self, rule_port: Optional[int], flow_port: Optional[int]) -> bool:
-    if rule_port is None:
+    if is_unrestricted_value(rule_port):
       return True
 
-    return flow_port is not None and rule_port == flow_port
+    return flow_port is not None and int(rule_port) == int(flow_port)
 
   def _protocol_matches(self, rule_protocol: str, flow_protocol: str) -> bool:
-    if rule_protocol == FirewallProtocol.ANY.value:
+    if is_unrestricted_value(rule_protocol) or str(rule_protocol).lower() == FirewallProtocol.ANY.value:
       return True
 
-    return rule_protocol == flow_protocol
+    return str(rule_protocol).lower() == str(flow_protocol).lower()
 
   def _country_matches(self, rule_country: Optional[str], flow_country: Optional[str]) -> bool:
     if rule_country is None:
@@ -87,31 +88,31 @@ class FirewallEngine:
     if not self._ip_matches(rule.get("source_ip"), flow.source_ip):
       return False, []
 
-    if rule.get("source_ip") is not None:
+    if not is_unrestricted_value(rule.get("source_ip")):
       matched_fields.append("source_ip")
 
     if not self._ip_matches(rule.get("destination_ip"), flow.destination_ip):
       return False, []
 
-    if rule.get("destination_ip") is not None:
+    if not is_unrestricted_value(rule.get("destination_ip")):
       matched_fields.append("destination_ip")
 
     if not self._port_matches(rule.get("source_port"), flow.source_port):
       return False, []
 
-    if rule.get("source_port") is not None:
+    if not is_unrestricted_value(rule.get("source_port")):
       matched_fields.append("source_port")
 
     if not self._port_matches(rule.get("destination_port"), flow.destination_port):
       return False, []
 
-    if rule.get("destination_port") is not None:
+    if not is_unrestricted_value(rule.get("destination_port")):
       matched_fields.append("destination_port")
 
     if not self._protocol_matches(rule.get("protocol", FirewallProtocol.ANY.value), flow.protocol.value):
       return False, []
 
-    if rule.get("protocol") not in (None, FirewallProtocol.ANY.value):
+    if not is_unrestricted_value(rule.get("protocol")) and str(rule.get("protocol", "")).lower() != FirewallProtocol.ANY.value:
       matched_fields.append("protocol")
 
     if not self._country_matches(rule.get("source_country"), source_country):

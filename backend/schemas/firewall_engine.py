@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from core.firewall_wildcards import is_unrestricted_value, normalize_protocol_constraint
 from models.firewall_engine import AutomaticRuleAction, AutomaticRuleTrigger
 from models.firewall_rule import FirewallProtocol, FirewallRulePublic
 
@@ -14,6 +15,13 @@ class FirewallFlowRequest(BaseModel):
   destination_port: Optional[int] = Field(default=None, ge=1, le=65535)
   protocol: FirewallProtocol = FirewallProtocol.ANY
   flow_id: Optional[str] = None
+
+  @field_validator("protocol", mode="before")
+  @classmethod
+  def normalize_flow_protocol(cls, value: Any) -> Any:
+    if is_unrestricted_value(value):
+      return FirewallProtocol.ANY
+    return normalize_protocol_constraint(value)
 
 
 class FirewallFlowBatchRequest(BaseModel):

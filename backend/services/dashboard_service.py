@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -33,9 +34,18 @@ def _hours_ago(hours: int) -> datetime:
   return _utc_now() - timedelta(hours=hours)
 
 
-def _start_of_day() -> datetime:
-  now = _utc_now()
-  return now.replace(hour=0, minute=0, second=0, microsecond=0)
+def _start_of_day(now: Optional[datetime] = None) -> datetime:
+  current = now or _utc_now()
+  return current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _attacks_today_match(now: Optional[datetime] = None) -> dict[str, Any]:
+  return {"created_at": {"$gte": _start_of_day(now)}}
+
+
+def _is_ingested_today(created_at: datetime, now: Optional[datetime] = None) -> bool:
+  timestamp = created_at if created_at.tzinfo else created_at.replace(tzinfo=timezone.utc)
+  return timestamp >= _start_of_day(now)
 
 
 def _start_of_week() -> datetime:
@@ -54,11 +64,18 @@ def _calculate_threat_level(score: float) -> str:
     return "critical"
   if score >= 60:
     return "high"
-  if score >= 35:
+  if score >= 30:
     return "medium"
   if score > 0:
     return "low"
   return "safe"
+
+
+THREAT_SCORE_CRITICAL_WEIGHT = 25
+THREAT_SCORE_HIGH_WEIGHT = 15
+THREAT_SCORE_MEDIUM_WEIGHT = 8
+THREAT_SCORE_LOW_WEIGHT = 3
+THREAT_SCORE_SATURATION_K = 2000.0
 
 
 def _calculate_threat_score(
@@ -67,13 +84,25 @@ def _calculate_threat_score(
   medium_count: int,
   low_count: int,
 ) -> float:
-  weighted_score = (
-    critical_count * 25
-    + high_count * 15
-    + medium_count * 8
-    + low_count * 3
+  """Return a 0-100 risk score with diminishing returns.
+
+  Weighted burden uses the existing severity weights (25/15/8/3). The score is
+  then 100 * (1 - exp(-burden / K)) with K=2000, the burden at which the score
+  reaches ~63. That scale equals 80 Critical alerts (80 * 25) or ~133 High
+  alerts, so modest volumes stay well below 100 and hundreds of High alerts
+  approach but do not slam into the cap.
+  """
+  weighted_burden = (
+    critical_count * THREAT_SCORE_CRITICAL_WEIGHT
+    + high_count * THREAT_SCORE_HIGH_WEIGHT
+    + medium_count * THREAT_SCORE_MEDIUM_WEIGHT
+    + low_count * THREAT_SCORE_LOW_WEIGHT
   )
-  return min(float(weighted_score), 100.0)
+  if weighted_burden <= 0:
+    return 0.0
+
+  normalized_score = 100.0 * (1.0 - math.exp(-weighted_burden / THREAT_SCORE_SATURATION_K))
+  return min(max(normalized_score, 0.0), 100.0)
 
 
 class DashboardService:
@@ -217,12 +246,11 @@ class DashboardService:
   async def get_attack_count(self) -> AttackCountResponse:
     threats_collection = get_threat_alerts_collection()
     now = _utc_now()
-    today_start = _start_of_day()
     week_start = _start_of_week()
     month_start = _start_of_month()
 
     total_attacks = await threats_collection.count_documents({})
-    attacks_today = await threats_collection.count_documents({"detected_at": {"$gte": today_start}})
+    attacks_today = await threats_collection.count_documents(_attacks_today_match(now))
     attacks_this_week = await threats_collection.count_documents({"detected_at": {"$gte": week_start}})
     attacks_this_month = await threats_collection.count_documents({"detected_at": {"$gte": month_start}})
     blocked_attacks = await threats_collection.count_documents({"status": "blocked"})

@@ -7,6 +7,7 @@ import ThreatAnalyticsPage from "@/pages/ThreatAnalyticsPage";
 import NetworkGraphPage from "@/pages/NetworkGraphPage";
 import AdminPanelPage from "@/pages/AdminPanelPage";
 import ZeroTrustDashboardPage from "@/pages/ZeroTrustDashboardPage";
+import DeviceInventoryPage from "@/pages/DeviceInventoryPage";
 import FirewallPage from "@/pages/FirewallPage";
 import IOCDatabasePage from "@/pages/IOCDatabasePage";
 import StixTaxiiPage from "@/pages/StixTaxiiPage";
@@ -91,6 +92,7 @@ export function AppRoutes() {
       >
         <Route index element={<DashboardHomePage />} />
         <Route path="zero-trust" element={<ZeroTrustDashboardPage />} />
+        <Route path="devices" element={<DeviceInventoryPage />} />
         <Route path="firewall" element={<FirewallPage />} />
         <Route path="ioc-database" element={<IOCDatabasePage />} />
         <Route path="stix-taxii" element={<StixTaxiiPage />} />

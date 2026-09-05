@@ -1,12 +1,13 @@
 export interface NavItem {
   label: string;
   path: string;
-  icon: "dashboard" | "firewall" | "threats" | "network" | "logs" | "packets" | "settings" | "admin" | "zeroTrust" | "ioc" | "stixTaxii" | "incidents" | "analytics";
+  icon: "dashboard" | "firewall" | "threats" | "network" | "logs" | "packets" | "settings" | "admin" | "zeroTrust" | "devices" | "ioc" | "stixTaxii" | "incidents" | "analytics";
 }
 
 export const navigationItems: NavItem[] = [
   { label: "Dashboard", path: "/", icon: "dashboard" },
   { label: "Zero Trust", path: "/zero-trust", icon: "zeroTrust" },
+  { label: "Device Inventory", path: "/devices", icon: "devices" },
   { label: "Network Graph", path: "/network", icon: "network" },
   { label: "Threat Analytics", path: "/threats", icon: "threats" },
   { label: "Analytics", path: "/analytics", icon: "analytics" },

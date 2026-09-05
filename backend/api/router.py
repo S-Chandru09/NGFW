@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from api.routes.analytics import router as analytics_router
 from api.routes.auth import router as auth_router
 from api.routes.dashboard import router as dashboard_router
+from api.routes.devices import router as devices_router
 from api.routes.firewall_engine import router as firewall_engine_router
 from api.routes.firewall_rules import router as firewall_rules_router
 from api.routes.incident_response import router as incident_response_router
@@ -21,6 +22,7 @@ from api.routes.users import router as users_router
 api_router = APIRouter()
 api_router.include_router(auth_router)
 api_router.include_router(users_router)
+api_router.include_router(devices_router)
 api_router.include_router(analytics_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(logs_router)

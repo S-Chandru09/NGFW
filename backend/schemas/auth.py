@@ -1,8 +1,19 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from models.user import UserPublic
+
+
+class RegisterRequest(BaseModel):
+  """Public signup payload. Role is never accepted from the client."""
+
+  model_config = ConfigDict(extra="ignore")
+
+  email: EmailStr
+  username: str = Field(..., min_length=3, max_length=50)
+  full_name: str = Field(..., min_length=2, max_length=100)
+  password: str = Field(..., min_length=8, max_length=128)
 
 
 class LoginRequest(BaseModel):
@@ -19,6 +30,11 @@ class TokenResponse(BaseModel):
   refresh_token: str
   token_type: str = "bearer"
   expires_in: int
+
+
+class OAuth2TokenResponse(BaseModel):
+  access_token: str
+  token_type: str = "bearer"
 
 
 class AuthResponse(BaseModel):

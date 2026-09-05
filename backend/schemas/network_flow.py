@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class NetworkFlowIngestRequest(BaseModel):
-  flow_id: str = Field(..., min_length=1, max_length=100)
+  flow_id: str = Field(..., min_length=1, max_length=255)
   source_ip: Optional[str] = Field(default=None, max_length=45)
   destination_ip: Optional[str] = Field(default=None, max_length=45)
   source_mac: Optional[str] = Field(default=None, max_length=32)
@@ -35,6 +35,9 @@ class NetworkFlowIngestRequest(BaseModel):
   is_threat: bool = False
   threat_label: Optional[str] = Field(default=None, max_length=100)
   threat_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+  user_id: Optional[str] = Field(default=None, max_length=64)
+  device_id: Optional[str] = Field(default=None, max_length=64)
+  uploaded_by: Optional[str] = Field(default=None, max_length=64)
 
 
 class NetworkFlowBatchIngestRequest(BaseModel):

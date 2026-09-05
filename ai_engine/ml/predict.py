@@ -24,7 +24,7 @@ from ml.features.feature_extraction import (
   FeatureExtractor,
 )
 from ml.preprocessing.preprocessing import DEFAULT_PROCESSED_DATA_PATH
-from ml.training.train_cnn import CNNPredictionHelper
+from ml.inference.cnn_inference import CNNPredictionHelper
 
 logger = logging.getLogger("ai-engine.predict")
 

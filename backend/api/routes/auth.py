@@ -1,7 +1,9 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import ValidationError
 from pymongo.errors import DuplicateKeyError
 
 from core.auth_utils import (
@@ -25,8 +27,10 @@ from schemas.auth import (
   AuthResponse,
   LoginRequest,
   MessageResponse,
+  OAuth2TokenResponse,
   ProtectedRouteResponse,
   RefreshTokenRequest,
+  RegisterRequest,
   TokenResponse,
   UserProfileResponse,
 )
@@ -51,7 +55,21 @@ def _build_token_response(tokens: dict[str, str]) -> TokenResponse:
   status_code=status.HTTP_201_CREATED,
   summary="Register a new user",
 )
-async def register_user(user_data: UserCreate) -> AuthResponse:
+async def register_user(payload: RegisterRequest, request: Request) -> AuthResponse:
+  try:
+    user_data = UserCreate(
+      email=payload.email,
+      username=payload.username,
+      full_name=payload.full_name,
+      password=payload.password,
+      role=UserRole.VIEWER,
+      is_active=True,
+    )
+  except ValidationError as exc:
+    raise RequestValidationError(exc.errors()) from exc
+
+  user_data = user_data.model_copy(update={"role": UserRole.VIEWER, "is_active": True})
+
   existing_email = await get_user_by_email(user_data.email)
   if existing_email is not None:
     raise HTTPException(
@@ -89,6 +107,18 @@ async def register_user(user_data: UserCreate) -> AuthResponse:
     )
 
   tokens = create_token_pair(created_user)
+
+  client_ip = request.client.host if request.client else None
+  user_agent = request.headers.get("user-agent")
+
+  await session_service.register_session_from_tokens(
+    user_id=str(created_user.id),
+    username=created_user.username,
+    access_token=tokens["access_token"],
+    refresh_token=tokens["refresh_token"],
+    ip_address=client_ip,
+    user_agent=user_agent,
+  )
 
   return AuthResponse(
     success=True,
@@ -138,13 +168,13 @@ async def login_user(login_data: LoginRequest, request: Request) -> AuthResponse
 
 @router.post(
   "/login/form",
-  response_model=AuthResponse,
+  response_model=OAuth2TokenResponse,
   summary="Login using OAuth2 password form (Swagger compatible)",
 )
 async def login_user_form(
   request: Request,
   form_data: OAuth2PasswordRequestForm = Depends(),
-) -> AuthResponse:
+) -> OAuth2TokenResponse:
   user = await authenticate_user(form_data.username, form_data.password)
 
   if user is None:
@@ -169,11 +199,9 @@ async def login_user_form(
     user_agent=user_agent,
   )
 
-  return AuthResponse(
-    success=True,
-    message="Login successful",
-    user=UserDocument.to_public(user),
-    tokens=_build_token_response(tokens),
+  return OAuth2TokenResponse(
+    access_token=tokens["access_token"],
+    token_type=tokens["token_type"],
   )
 
 
