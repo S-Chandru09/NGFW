@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
+#my project own modules
 from api.router import api_router
 from api.routes.websocket_alerts import router as websocket_router
 from config import settings
