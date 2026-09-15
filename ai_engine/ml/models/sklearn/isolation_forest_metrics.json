@@ -1,0 +1,48 @@
+{
+  "model_name": "isolation_forest",
+  "algorithm": "IsolationForest",
+  "dataset": "CICIDS2017",
+  "task": "anomaly_detection",
+  "metrics": {
+    "accuracy": 0.8475587558755876,
+    "precision": 0.5490601771267803,
+    "recall": 0.5888395792241946,
+    "f1_score": 0.5682545617285,
+    "roc_auc": 0.7885440140566983,
+    "detection_rate": 0.5888395792241946,
+    "false_positive_rate": 0.09931191444015296,
+    "false_negative_rate": 0.4111604207758054,
+    "true_positives": 50155,
+    "true_negatives": 373582,
+    "false_positives": 41192,
+    "false_negatives": 35021,
+    "true_anomalies": 85176,
+    "predicted_anomalies": 91347,
+    "true_normals": 414774,
+    "predicted_normals": 408603
+  },
+  "confusion_matrix": [
+    [
+      373582,
+      41192
+    ],
+    [
+      35021,
+      50155
+    ]
+  ],
+  "anomaly_score_summary": {
+    "decision_function_mean": 0.07318824629358518,
+    "decision_function_std": 0.09883404000640628,
+    "decision_function_min": -0.29326254599805757,
+    "decision_function_max": 0.15687739597761868,
+    "score_samples_mean": -0.4038032657815852,
+    "score_samples_std": 0.09883404000640629,
+    "score_samples_min": -0.7702540580732279,
+    "score_samples_max": -0.32011411609755164
+  },
+  "train_samples": 1999798,
+  "test_samples": 499950,
+  "feature_count": 43,
+  "evaluated_at": "2026-09-03T05:44:09.389969+00:00"
+}

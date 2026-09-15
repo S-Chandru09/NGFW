@@ -1,0 +1,59 @@
+{
+  "model_name": "dbscan",
+  "algorithm": "DBSCAN",
+  "dataset": "CICIDS2017",
+  "task": "density_clustering",
+  "model_path": "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\dbscan_model.pkl",
+  "train_labels_path": "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\dbscan_train_labels.npy",
+  "test_labels_path": "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\dbscan_test_labels.npy",
+  "feature_names": [
+    "pca_component_1",
+    "pca_component_2",
+    "pca_component_3",
+    "pca_component_4",
+    "pca_component_5",
+    "pca_component_6",
+    "pca_component_7",
+    "pca_component_8",
+    "pca_component_9",
+    "pca_component_10",
+    "pca_component_11",
+    "pca_component_12",
+    "pca_component_13",
+    "pca_component_14",
+    "pca_component_15"
+  ],
+  "label_classes": [
+    "BENIGN",
+    "Bot",
+    "DDoS",
+    "DoS GoldenEye",
+    "DoS Hulk",
+    "DoS Slowhttptest",
+    "DoS slowloris",
+    "FTP-Patator",
+    "Heartbleed",
+    "Infiltration",
+    "PortScan",
+    "SSH-Patator",
+    "Web Attack \ufffd Brute Force",
+    "Web Attack \ufffd Sql Injection",
+    "Web Attack \ufffd XSS"
+  ],
+  "benign_label": "BENIGN",
+  "benign_label_index": 0,
+  "hyperparameters": {
+    "eps": 0.8,
+    "min_samples": 5,
+    "metric": "euclidean",
+    "algorithm": "auto",
+    "leaf_size": 30,
+    "max_clustering_samples": 25000
+  },
+  "visualization_paths": [
+    "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\visualizations\\dbscan_clusters_train.png",
+    "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\visualizations\\dbscan_true_labels_train.png",
+    "F:\\Main_Project\\ai_engine\\ml\\models\\sklearn\\visualizations\\dbscan_clusters_test.png"
+  ],
+  "trained_at": "2026-09-03T06:05:00.684158+00:00"
+}

@@ -34,11 +34,8 @@ Thumbs.db
 logs/
 *.log
 
-# ML artifacts (train locally)
-ai_engine/ml/models/sklearn/*
-ai_engine/ml/models/tensorflow/*
-!ai_engine/ml/models/sklearn/.gitkeep
-!ai_engine/ml/models/tensorflow/.gitkeep
+# ML artifacts are tracked (large binaries use Git LFS)
+# See .gitattributes for *.pkl, *.keras, *.npy
 ai_engine/data/raw/*
 ai_engine/data/processed/*
 !ai_engine/data/raw/.gitkeep

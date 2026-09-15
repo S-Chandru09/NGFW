@@ -8,10 +8,7 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-ml/models/sklearn/*
-ml/models/tensorflow/*
-!ml/models/sklearn/.gitkeep
-!ml/models/tensorflow/.gitkeep
+# Trained models are tracked via Git LFS from the repo root
 network/pcap/incoming/*
 network/pcap/processing/*
 network/pcap/processed/*
