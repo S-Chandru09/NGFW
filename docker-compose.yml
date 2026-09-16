@@ -3,8 +3,7 @@ services:
     image: mongo:7
     container_name: ai-ngfw-mongodb
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:27017:27017"
+    
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-ngfw_admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-ngfw_secret_2024}
@@ -46,7 +45,7 @@ services:
       MONGODB_DATABASE: ${MONGODB_DATABASE:-ai_ngfw}
       CORS_ORIGINS: http://localhost,http://localhost:80,http://127.0.0.1,http://frontend
       AI_ENGINE_ENABLED: "true"
-      AI_ENGINE_URL: http://ai-engine:8001
+      AI_ENGINE_URL: http://host.docker.internal:8001
       AI_ENGINE_TIMEOUT_SECONDS: ${AI_ENGINE_TIMEOUT_SECONDS:-600}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-dev-internal-api-key}
       LOG_LEVEL: INFO

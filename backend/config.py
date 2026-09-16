@@ -69,7 +69,7 @@ class Settings(BaseSettings):
 
   # Network Capture
   network_capture_enabled: bool = Field(default=True, alias="NETWORK_CAPTURE_ENABLED")
-  capture_interface: str = Field(default="eth0", alias="CAPTURE_INTERFACE")
+  capture_interface: Optional[str] = Field(default=None, alias="CAPTURE_INTERFACE")
   capture_bpf_filter: str = Field(default="ip or ip6", alias="CAPTURE_BPF_FILTER")
   pcap_storage_path: str = Field(default="../network/pcap/incoming", alias="PCAP_STORAGE_PATH")
   pcap_max_file_size_mb: int = Field(default=100, alias="PCAP_MAX_FILE_SIZE_MB")
